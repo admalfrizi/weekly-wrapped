@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    container_name: weekly_wrapped_postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-root}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-lokal26}
+      POSTGRES_DB: ${DB_NAME:-weekly-wrapped-db}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-root} -d ${DB_NAME:-weekly-wrapped-db}"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./weekly-wrapped-fe
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=/api/v1
+    environment:
+      - INTERNAL_API_URL=http://backend:8080/api/v1
+    expose:
+      - "3000"
+    networks:
+      - app-network
+  
+  migrator:
+    image: migrate/migrate
+    container_name: weekly_wrapped_migrator
+    volumes:
+      - ./weekly-wrapped-be/db/migrations:/migrations
+    command:
+      - -path=/migrations
+      - -database=postgres://${DB_USER:-root}:${DB_PASSWORD:-lokal26}@db:5432/${DB_NAME:-weekly-wrapped-db}?sslmode=disable
+      - up
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
+  
+  backend:
+    build:
+      context: ./weekly-wrapped-be
+      dockerfile: Dockerfile
+    expose:
+      - "8080"
+    env_file:
+      - ./weekly-wrapped-be/.env
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=root
+      - DB_PASSWORD=lokal26
+      - DB_NAME=weekly-wrapped-db
+      - DB_SSLMODE=disable
+      - GIN_MODE=release
+    restart: on-failure
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
+    networks:
+      - app-network
+  
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: on-failure
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

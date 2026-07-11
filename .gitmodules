@@ -1,0 +1,6 @@
+[submodule "weekly-wrapped-fe"]
+	path = weekly-wrapped-fe
+	url = https://github.com/admalfrizi/weekly-wrapped-fe.git
+[submodule "weekly-wrapped-be"]
+	path = weekly-wrapped-be
+	url = https://github.com/admalfrizi/weekly-wrapped-be.git
