@@ -236,6 +236,8 @@ Four tables, managed via `golang-migrate` (`weekly-wrapped-be/db/migrations`):
 - [ ] CI pipeline for lint/build/test on both submodules
 - [ ] HTTPS/TLS termination in `nginx.conf` (currently HTTP only, with a commented-out TLS block ready to fill in)
 
+### Waktu yang saya habiskan untuk Projek ini sekitar 5 Hari.
+
 ## Author
 
 **Adam Alfarizi Ismail** — [@admalfrizi](https://github.com/admalfrizi)
