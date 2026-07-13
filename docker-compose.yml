@@ -65,6 +65,7 @@ services:
       - DB_NAME=weekly-wrapped-db
       - DB_SSLMODE=disable
       - GIN_MODE=release
+      - DB_URL=postgres://root:lokal26@db:5432/weekly-wrapped-db?sslmode=disable
     restart: on-failure
     depends_on:
       migrator:
